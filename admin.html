@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel – Complaint Management</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { padding: 20px; background: #f0f4f8; }
+    .container { max-width: 900px; margin: 80px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+    .back-link { margin-bottom: 15px; display: inline-block; color: #3498db; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #34495e; color: white; }
+    td { background: #f9f9f9; }
+    .status-resolved { color: #27ae60; font-weight: 600; }
+    .status-pending  { color: #e74c3c; font-weight: 600; }
+    .btn-resolve {
+      padding: 6px 10px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;
+    }
+    .btn-resolve:hover { background: #27ae60; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="login.html" class="back-link">← Back to Login</a>
+    <h1>Admin – Complaint Management</h1>
+
+    <p>Total complaints: <span id="compCount">0</span></p>
+
+    <table id="compTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Email</th>
+          <th>Category</th>
+          <th>Complaint</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="compBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Very simple “admin login” for demo (no real backend)
+    if (!localStorage.getItem("isAdminLoggedIn")) {
+      const pw = prompt("Enter admin password (for demo only):");
+      if (pw !== "admin123") {
+        alert("Wrong password. Redirecting to login...");
+        window.location.href = "login.html";
+      } else {
+        localStorage.setItem("isAdminLoggedIn", "true");
+      }
+    }
+
+    function loadAllComplaints() {
+      const allComps = JSON.parse(localStorage.getItem("all_complaints") || "[]");
+      const countEl = document.getElementById("compCount");
+      const body = document.getElementById("compBody");
+
+      countEl.textContent = allComps.length || 0;
+      body.innerHTML = "";
+
+      if (allComps.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center; color:gray; font-style:italic;">No complaints yet.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      allComps.forEach(item => {
+        const row = document.createElement("tr");
+
+        const statusClass = item.status === "Resolved" ? "status-resolved" : "status-pending";
+        const statusText = item.status;
+
+        row.innerHTML = `
+          <td>${item.id}</td>
+          <td>${item.name}</td>
+          <td>${item.email}</td>
+          <td>${item.category}</td>
+          <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${item.complaint}
+          </td>
+          <td><span class="${statusClass}">${statusText}</span></td>
+          <td>
+            ${item.status !== "Resolved" ? 
+              '<button class="btn-resolve" onclick="markResolved('+item.id+')">Mark Resolved</button>' : 
+              '<span>✅ Resolved</span>'
+            }
+          </td>
+        `;
+        body.appendChild(row);
+      });
+    }
+
+    function markResolved(id) {
+      const allComps = JSON.parse(localStorage.getItem("all_complaints") || "[]");
+      const found = allComps.find(c => c.id === id);
+
+      if (found && found.status !== "Resolved") {
+        found.status = "Resolved";
+      }
+
+      localStorage.setItem("all_complaints", JSON.stringify(allComps));
+      loadAllComplaints();
+    }
+
+    // Load complaints when page opens
+    document.addEventListener("DOMContentLoaded", loadAllComplaints);
+  </script>
+</body>
+</html>
